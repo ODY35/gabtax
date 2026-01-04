@@ -1,20 +1,20 @@
 {
   "files": {
     "main.css": "/gabtax/static/css/main.22ccbff9.css",
-    "main.js": "/gabtax/static/js/main.fb4cd23b.js",
+    "main.js": "/gabtax/static/js/main.bfe468c7.js",
     "static/js/239.862ae3fa.chunk.js": "/gabtax/static/js/239.862ae3fa.chunk.js",
     "static/js/977.373c3c8a.chunk.js": "/gabtax/static/js/977.373c3c8a.chunk.js",
     "static/js/455.4411e4c2.chunk.js": "/gabtax/static/js/455.4411e4c2.chunk.js",
     "static/media/logo.png": "/gabtax/static/media/logo.c7a1b5dc356236b36494.png",
     "index.html": "/gabtax/index.html",
     "main.22ccbff9.css.map": "/gabtax/static/css/main.22ccbff9.css.map",
-    "main.fb4cd23b.js.map": "/gabtax/static/js/main.fb4cd23b.js.map",
+    "main.bfe468c7.js.map": "/gabtax/static/js/main.bfe468c7.js.map",
     "239.862ae3fa.chunk.js.map": "/gabtax/static/js/239.862ae3fa.chunk.js.map",
     "977.373c3c8a.chunk.js.map": "/gabtax/static/js/977.373c3c8a.chunk.js.map",
     "455.4411e4c2.chunk.js.map": "/gabtax/static/js/455.4411e4c2.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.22ccbff9.css",
-    "static/js/main.fb4cd23b.js"
+    "static/js/main.bfe468c7.js"
   ]
 }
