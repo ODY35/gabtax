@@ -661,7 +661,7 @@ export default function TableauDeBord({ user, initialData, isReadOnly, t, lang, 
         </button>
       </header>
 
-      {/* Overdue Payment Notification *}
+      {/* Overdue Payment Notification */}
       {user.role !== 'admin' && currentUserData?.registration?.paymentStatus === 'overdue' && (
         <div className="glass-panel" style={{borderLeft: '4px solid #ff4757', padding: '1rem', marginTop: '0', backgroundColor: 'rgba(255, 71, 87, 0.1)'}}>
           <p style={{margin:0, fontSize:'0.9rem', color: '#ff4757', fontWeight: 'bold'}}>
