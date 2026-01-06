@@ -628,14 +628,15 @@ export default function TableauDeBord({ user, initialData, isReadOnly, t, lang, 
   };
 
   // DEBUG: Simplified return for testing
+  /*
   return (
     <div className="dashboard-container">
       <h1>Tableau de Bord de Test</h1>
       <p>Utilisateur: {user.name} ({user.id})</p>
     </div>
   );
+  */
 
-  /*
   // Original return
   return (
     <div className="dashboard-container">
@@ -768,5 +769,5 @@ export default function TableauDeBord({ user, initialData, isReadOnly, t, lang, 
     )}
   </div>
   );
-  */
+
 }
