@@ -1,20 +1,20 @@
 {
   "files": {
-    "main.css": "/gabtax/static/css/main.9e8e6f98.css",
-    "main.js": "/gabtax/static/js/main.9544c038.js",
+    "main.css": "/gabtax/static/css/main.1fe9c5e0.css",
+    "main.js": "/gabtax/static/js/main.f8d2471d.js",
     "static/js/239.862ae3fa.chunk.js": "/gabtax/static/js/239.862ae3fa.chunk.js",
     "static/js/977.373c3c8a.chunk.js": "/gabtax/static/js/977.373c3c8a.chunk.js",
     "static/js/455.4411e4c2.chunk.js": "/gabtax/static/js/455.4411e4c2.chunk.js",
     "static/media/logo.png": "/gabtax/static/media/logo.c7a1b5dc356236b36494.png",
     "index.html": "/gabtax/index.html",
-    "main.9e8e6f98.css.map": "/gabtax/static/css/main.9e8e6f98.css.map",
-    "main.9544c038.js.map": "/gabtax/static/js/main.9544c038.js.map",
+    "main.1fe9c5e0.css.map": "/gabtax/static/css/main.1fe9c5e0.css.map",
+    "main.f8d2471d.js.map": "/gabtax/static/js/main.f8d2471d.js.map",
     "239.862ae3fa.chunk.js.map": "/gabtax/static/js/239.862ae3fa.chunk.js.map",
     "977.373c3c8a.chunk.js.map": "/gabtax/static/js/977.373c3c8a.chunk.js.map",
     "455.4411e4c2.chunk.js.map": "/gabtax/static/js/455.4411e4c2.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.9e8e6f98.css",
-    "static/js/main.9544c038.js"
+    "static/css/main.1fe9c5e0.css",
+    "static/js/main.f8d2471d.js"
   ]
 }
