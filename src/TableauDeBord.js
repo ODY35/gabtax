@@ -424,6 +424,11 @@ export default function TableauDeBord({ user, initialData, isReadOnly, t, lang, 
         )}
         
         {renderCalendar()}
+
+        {/* Button to open Profile (Temporary location since Header is in HomePage) */}
+        <button onClick={handleOpenProfile} className="test-btn" style={{marginTop: '10px', fontSize: '0.8rem'}}>
+          ✏️ {t.editProfile || 'Edit Profile'}
+        </button>
       </section>
 
       <section className="payment-info glass-panel">
@@ -683,6 +688,31 @@ export default function TableauDeBord({ user, initialData, isReadOnly, t, lang, 
         </div>
       )}
 
+      {/* Notifications Panel */}
+      {user.role !== 'admin' && (
+        <div className="glass-panel">
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px'}}>
+            <h3>🔔 {t.notifications || 'Notifications'}</h3>
+            {notifications.length > 0 && (
+              <button onClick={() => setNotifications([])} style={{background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem'}}>
+                {t.clearNotifications || 'Clear All'}
+              </button>
+            )}
+          </div>
+          {notifications.length === 0 ? (
+            <p style={{opacity: 0.7}}>{t.noNotifications || 'No new notifications.'}</p>
+          ) : (
+            <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
+              {notifications.map(notif => (
+                <div key={notif.id} style={{padding: '10px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', borderLeft: `4px solid ${notif.type === 'error' ? '#ff4757' : notif.type === 'warning' ? '#f1c40f' : '#2ecc71'}`, display: 'flex', alignItems: 'center'}}>
+                  <span>{notif.message}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <main className="dashboard-content">
         {user.role === 'admin' ? renderAdminDashboard() : renderUserDashboard()}
       </main>
@@ -754,6 +784,42 @@ export default function TableauDeBord({ user, initialData, isReadOnly, t, lang, 
                     </button>
                 </div>
             </div>
+        </div>
+      )}
+
+      {/* Profile Modal */}
+      {showProfileModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="glass-panel" style={{maxWidth: '500px', width: '90%', border: '1px solid var(--primary-glow)'}}>
+            <h3>{t.editProfile}</h3>
+            <form onSubmit={handleSaveProfile} style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
+              
+              <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '15px'}}>
+                {profileLogo ? (
+                  <div style={{position: 'relative', display: 'inline-block'}}>
+                    <img src={profileLogo} alt="Logo" style={{width: '80px', height: '80px', objectFit: 'contain', borderRadius: '50%', border: '2px solid var(--primary-glow)'}} />
+                    <button type="button" onClick={() => setProfileLogo(null)} style={{position: 'absolute', top: 0, right: 0, background: 'red', color: 'white', borderRadius: '50%', width: '20px', height: '20px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px'}}>X</button>
+                  </div>
+                ) : (
+                  <div style={{width: '80px', height: '80px', borderRadius: '50%', border: '2px dashed var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)'}}>
+                    {t.logo || 'Logo'}
+                  </div>
+                )}
+                <label className="action-btn" style={{marginTop: '10px', cursor: 'pointer', fontSize: '0.8rem', padding: '5px 10px', width: 'auto', textAlign: 'center'}}>
+                  {t.uploadLogo || 'Upload Logo'}
+                  <input type="file" accept="image/*" onChange={handleLogoUpload} style={{display: 'none'}} />
+                </label>
+              </div>
+
+              <label>{t.companyName}</label>
+              <input className="input-field" value={profileFormData.companyName || ''} onChange={e => setProfileFormData({...profileFormData, companyName: e.target.value})} />
+              
+              <div style={{display: 'flex', gap: '10px', marginTop: '20px'}}>
+                <button type="button" className="test-btn" onClick={() => setShowProfileModal(false)}>{t.cancel}</button>
+                <button type="submit" className="action-btn">{t.saveChanges}</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
