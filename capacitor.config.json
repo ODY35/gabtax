@@ -1,0 +1,8 @@
+{
+  "appId": "com.gabtax.app",
+  "appName": "Gtax",
+  "webDir": "build",
+  "server": {
+    "androidScheme": "https"
+  }
+}

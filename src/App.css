@@ -50,10 +50,6 @@ body {
 
 .app-root {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   position: relative;
   transform: none; /* Ensures fixed elements stay fixed to the screen */
 }
@@ -132,6 +128,11 @@ body {
   width: 100%;
   max-width: 400px;
   text-align: center;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100vh;
 }
 
 .hero-title {
@@ -196,17 +197,23 @@ body {
 
 /* Dashboard Styles */
 .dashboard-container {
-  width: 90%;
-  max-width: 1200px;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
 .dashboard-header {
+  display: none; /* Hidden because HomePage has its own header now */
+}
+
+.dashboard-content {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
 }
 
 .company-icon {
@@ -319,48 +326,6 @@ body {
 @keyframes pulseAI {
   0% { transform: scale(0.8); opacity: 0.5; }
   100% { transform: scale(1.2); opacity: 0; }
-}
-
-.logout-btn {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background: rgba(255, 0, 0, 0.2);
-  border: 1px solid rgba(255, 0, 0, 0.3);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  z-index: 100;
-}
-
-.lang-switch {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  padding: 8px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  z-index: 100;
-  font-weight: bold;
-}
-
-.theme-switch {
-  position: fixed;
-  top: 60px;
-  left: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: var(--text-main);
-  padding: 8px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  z-index: 100;
-  font-weight: bold;
-  text-transform: uppercase;
 }
 
 .auth-logo {
@@ -508,4 +473,63 @@ body {
 
 .sections-container {
     position: relative;
+}
+
+/* Calendar Styles */
+.calendar-container {
+  margin-top: 20px;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.calendar-header {
+  text-align: center;
+  font-weight: bold;
+  padding: 5px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.calendar-day {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  height: 60px;
+  padding: 5px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid transparent;
+}
+
+.calendar-day.today {
+  border-color: var(--primary-glow);
+  background: rgba(0, 242, 255, 0.1);
+}
+
+.calendar-day.deadline {
+  border-color: #ff4757;
+}
+
+.day-number {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.day-event {
+  font-size: 1.2rem;
+  margin-top: 5px;
+}
+
+.calendar-legend {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  display: flex;
+  gap: 15px;
+  justify-content: center;
 }

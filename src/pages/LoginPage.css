@@ -1,0 +1,11 @@
+/* ... existing styles ... */
+
+.error-message {
+  color: #d9534f; /* A reddish color for errors */
+  background-color: #f2dede;
+  border: 1px solid #ebccd1;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  text-align: center;
+}

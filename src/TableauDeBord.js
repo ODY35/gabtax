@@ -17,13 +17,16 @@ export default function TableauDeBord({ user, initialData, isReadOnly, t, lang, 
   const [selectedIndustry, setSelectedIndustry] = useState('general');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileFormData, setProfileFormData] = useState({});
+  const [profileLogo, setProfileLogo] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('mobile_money');
   const [paymentAmount, setPaymentAmount] = useState('');
   const [transactions, setTransactions] = useState([]);
   const [transactionCounter, setTransactionCounter] = useState(0);
   const [currentUserData, setCurrentUserData] = useState(null);
   const [deploymentState, setDeploymentState] = useState('idle'); // idle, building, built, deploying, live
-  const [currentSection, setCurrentSection] = useState(0);
+  const [notifications, setNotifications] = useState([]);
 
   // Paramètres fictifs pour le mode test (générés une seule fois)
   const [testSettings] = useState({
@@ -34,14 +37,25 @@ export default function TableauDeBord({ user, initialData, isReadOnly, t, lang, 
 
   const displaySettings = user.role === 'test' ? testSettings : adminSettings;
 
-  /*
-  // DEBUG: Temporarily disabled
   useEffect(() => {
     if (user && allUsersData.length > 0) {
       const currentUser = allUsersData.find(u => u.registration.id === user.id);
       setCurrentUserData(currentUser);
     }
   }, [user, allUsersData]);
+
+  // Generate Notifications
+  useEffect(() => {
+    const newNotifications = [];
+    if (currentUserData?.registration?.paymentStatus === 'overdue') {
+      newNotifications.push({ id: 1, type: 'error', message: t.alertPaymentOverdue || "Payment overdue" });
+    }
+    if (new Date().getDate() > 15 && new Date().getDate() < 25) {
+      newNotifications.push({ id: 2, type: 'warning', message: t.alertTaxDeadline || "Tax deadline approaching" });
+    }
+    newNotifications.push({ id: 3, type: 'info', message: t.alertSystemUpdate || "System update completed" });
+    setNotifications(newNotifications);
+  }, [currentUserData, t]);
 
   // Simulation des notifications légales (Email & SMS)
   useEffect(() => {
@@ -67,7 +81,6 @@ export default function TableauDeBord({ user, initialData, isReadOnly, t, lang, 
       }
     }
   }, [user, t, lang, currentUserData]);
-  */
 
   useEffect(() => {
     // Placeholder for sound effect
@@ -189,6 +202,39 @@ export default function TableauDeBord({ user, initialData, isReadOnly, t, lang, 
     setShowPaymentModal(false);
   };
 
+  const handleOpenProfile = () => {
+    if (currentUserData) {
+      setProfileFormData({ ...currentUserData.registration });
+      setProfileLogo(currentUserData.registration.logo || null);
+    }
+    setShowProfileModal(true);
+  };
+
+  const handleSaveProfile = (e) => {
+    e.preventDefault();
+    const updatedUsers = allUsersData.map(u => {
+      if (u.registration.id === user.id) {
+        return { ...u, registration: { ...u.registration, ...profileFormData, logo: profileLogo } };
+      }
+      return u;
+    });
+    setAllUsersData(updatedUsers);
+    setCurrentUserData(updatedUsers.find(u => u.registration.id === user.id));
+    setShowProfileModal(false);
+    alert(t.settingsSaved);
+  };
+
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileLogo(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleBuildAPK = () => {
     setDeploymentState('building');
     setTimeout(() => {
@@ -297,6 +343,47 @@ export default function TableauDeBord({ user, initialData, isReadOnly, t, lang, 
     URL.revokeObjectURL(url);
   };
 
+  const renderCalendar = () => {
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const firstDay = new Date(currentYear, currentMonth, 1).getDay(); // 0 = Sunday
+    
+    const days = [];
+    for (let i = 0; i < firstDay; i++) {
+      days.push(<div key={`empty-${i}`} className="calendar-day empty" style={{background: 'transparent'}}></div>);
+    }
+    
+    for (let d = 1; d <= daysInMonth; d++) {
+      const isToday = d === today.getDate();
+      const isDeadline = d === 20; // Fixed deadline for example
+      
+      days.push(
+        <div key={d} className={`calendar-day ${isToday ? 'today' : ''} ${isDeadline ? 'deadline' : ''}`}>
+          <span className="day-number">{d}</span>
+          {isDeadline && <span className="day-event" title={t.deadlineMsg}>📅</span>}
+        </div>
+      );
+    }
+
+    return (
+      <div className="calendar-container glass-panel">
+        <h3>📅 {t.taxCalendar} - {t.months[currentMonth]} {currentYear}</h3>
+        <div className="calendar-grid">
+          {['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'].map(d => (
+            <div key={d} className="calendar-header">{d}</div>
+          ))}
+          {days}
+        </div>
+        <div className="calendar-legend">
+            <span style={{marginRight:'10px'}}><span style={{color:'#ff4757'}}>●</span> {t.deadlineMsg}</span>
+            <span><span style={{color:'var(--primary-glow)'}}>●</span> {t.today}</span>
+        </div>
+      </div>
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="dashboard-container">
@@ -306,154 +393,118 @@ export default function TableauDeBord({ user, initialData, isReadOnly, t, lang, 
   }
 
 
-    const userSections = [
-    <section key="input" className="input-section glass-panel">
-      <h3>{t.inputTitle}</h3>
-      <form onSubmit={handleAddRevenue}>
-        <select
-          value={selectedMonthIndex}
-          onChange={(e) => setSelectedMonthIndex(e.target.value)}
-          className="input-field"
-        >
-          {t.months.map((m, index) => (
-            <option key={index} value={index}>{m}</option>
-          ))}
-        </select>
-        <input
-          type="number"
-          placeholder={t.amountPlaceholder}
-          value={currentMonthRevenue}
-          onChange={(e) => setCurrentMonthRevenue(e.target.value)}
-          className="input-field"
-        />
-        <button type="submit" className="action-btn">{t.calcBtn}</button>
-      <button type="button" className="action-btn" onClick={onShowDeclarationPage} style={{marginTop: '10px', backgroundColor: 'var(--accent-color)'}}>
-        📑 {t.fiscalDeclaration || 'Déclaration Fiscale'}
-      </button>
-      <button type="button" className="action-btn" onClick={onShowPaiementPage} style={{marginTop: '10px', backgroundColor: 'var(--accent-color)'}}>
-        💳 {t.paymentAndTracking || 'Paiement et Suivi'}
-      </button>
-      <button type="button" className="action-btn" onClick={onShowAnalyseFiscalePage} style={{marginTop: '10px', backgroundColor: 'var(--accent-color)'}}>
-        📈 Analyse Fiscale
-      </button>
-      </form>
-      
-      {user.role === 'test' && (
-        <div style={{marginTop: '1rem', borderTop: '1px solid var(--glass-border)', paddingTop: '1rem'}}>
-          <p style={{fontSize: '0.9rem', opacity: 0.7, marginBottom: '0.5rem'}}>
-            ℹ️ {t.simulationInfo}
-          </p>
-          <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px'}}>
-            <span style={{fontSize: '1.5rem'}}>{getIndustryIcon(selectedIndustry)}</span>
-            <select
-              value={selectedIndustry}
-              onChange={(e) => setSelectedIndustry(e.target.value)}
-              className="input-field"
-              style={{margin: 0}}
-            >
-              <option value="general">{t.industryGeneral}</option>
-              <option value="tech">{t.industryTech}</option>
-              <option value="retail">{t.industryRetail}</option>
-              <option value="consulting">{t.industryConsulting}</option>
-            </select>
-          </div>
-          <div style={{display: 'flex', gap: '10px'}}>
-            <button
-              type="button"
-              className="test-btn"
-              onClick={handlePrefill}
-              style={{borderColor: 'var(--primary-glow)', color: 'var(--primary-glow)'}}
-            >
-              🎲 {t.prefillData}
-            </button>
-            <button
-              type="button"
-              className="test-btn"
-              onClick={handleClearData}
-              style={{borderColor: '#ff4757', color: '#ff4757'}}
-            >
-              🗑️ {t.clearData}
-            </button>
-          </div>
-        </div>
-      )}
-    </section>,
-    <section key="payment" className="payment-info glass-panel">
-      <h3>{t.paymentInfo}</h3>
-      <p><strong>{t.payTo}</strong> {displaySettings.operator}</p>
-      <p><strong>{t.bankAccount}:</strong> {displaySettings.bankAccount}</p>
-      <p><strong>{t.phoneNumbers}:</strong> {displaySettings.phoneNumbers}</p>
-      <button className="action-btn" onClick={() => setShowPaymentModal(true)} style={{marginTop: '1rem'}}>
-        💳 {t.makePayment}
-      </button>
-    </section>,
-    <section key="history" className="glass-panel">
-      <h3>{t.transactionHistory}</h3>
-      {transactions.length === 0 ? (
-        <p style={{opacity: 0.7}}>{t.noTransactions}</p>
-      ) : (
-        <div className="transaction-list">
-          <div className="transaction-header" style={{display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', marginBottom: '10px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '5px'}}>
-            <span style={{flex: 1.5}}>{t.date}</span>
-            <span style={{flex: 1}}>{t.amount}</span>
-            <span style={{flex: 1}}>{t.method}</span>
-            <span style={{flex: 1, textAlign: 'right'}}>{t.status}</span>
-            <span style={{flex: 1, textAlign: 'right'}}>ID</span>
-          </div>
-          {transactions.map(tx => (
-            <div key={tx.id} className="transaction-item" style={{display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--glass-border)', fontSize: '0.9rem'}}>
-              <span style={{flex: 1.5}}>{tx.timestamp.toLocaleString()}</span>
-              <span style={{flex: 1}}>{Number(tx.amount).toLocaleString()} FCFA</span>
-              <span style={{flex: 1}}>{tx.method === 'mobile_money' ? t.mobileMoney.split('(')[0] : t.bankTransfer}</span>
-              <span style={{flex: 1, textAlign: 'right', color: tx.status === 'Success' ? '#2ecc71' : '#f1c40f'}}>{tx.status}</span>
-              <span style={{flex: 1, textAlign: 'right', fontFamily: 'monospace', fontSize: '0.8em'}}>{tx.id}</span>
+  const renderUserDashboard = () => (
+    <>
+      <section className="input-section glass-panel">
+        <h3>{t.inputTitle}</h3>
+        <form onSubmit={handleAddRevenue}>
+          <select value={selectedMonthIndex} onChange={(e) => setSelectedMonthIndex(e.target.value)} className="input-field">
+            {t.months.map((m, index) => <option key={index} value={index}>{m}</option>)}
+          </select>
+          <input type="number" placeholder={t.amountPlaceholder} value={currentMonthRevenue} onChange={(e) => setCurrentMonthRevenue(e.target.value)} className="input-field" />
+          <button type="submit" className="action-btn">{t.calcBtn}</button>
+        </form>
+        {user.role === 'test' && (
+          <div style={{marginTop: '1rem', borderTop: '1px solid var(--glass-border)', paddingTop: '1rem'}}>
+            <p style={{fontSize: '0.9rem', opacity: 0.7, marginBottom: '0.5rem'}}>ℹ️ {t.simulationInfo}</p>
+            <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px'}}>
+              <span style={{fontSize: '1.5rem'}}>{getIndustryIcon(selectedIndustry)}</span>
+              <select value={selectedIndustry} onChange={(e) => setSelectedIndustry(e.target.value)} className="input-field" style={{margin: 0}}>
+                <option value="general">{t.industryGeneral}</option>
+                <option value="tech">{t.industryTech}</option>
+                <option value="retail">{t.industryRetail}</option>
+                <option value="consulting">{t.industryConsulting}</option>
+              </select>
             </div>
-          ))}
-        </div>
-      )}
-    </section>,
-    <section key="download" className="glass-panel">
-      <button className="action-btn" onClick={() => downloadData('pdf')}>{t.downloadPdfOnly}</button>
-    </section>,
-    <section key="stats" className="stats-section glass-panel">
-      <div className="stats-nav">
-        <button className={view === 'monthly' ? 'active' : ''} onClick={() => setView('monthly')}>{t.monthly}</button>
-        <button className={view === 'annual' ? 'active' : ''} onClick={() => setView('annual')}>{t.annual}</button>
-      </div>
-      <div className="stats-display">
-        {view === 'monthly' ? (
-          <div className="data-grid">
-            {revenueData.map(data => (
-              <div key={data.id} className="data-card">
-                <h4>{t.months[data.monthIndex]}</h4>
-                <p className="revenue">{data.revenue.toLocaleString()} FCFA</p>
-                <div className="tax-details">
-                  <span>TVA: {data.tva.toLocaleString()}</span>
-                  <span>IS: {data.is.toLocaleString()}</span>
-                  <span>Patente: {data.patente.toLocaleString()}</span>
-                </div>
-              </div>
-            ))}
-            {revenueData.length === 0 && <p>{t.noData}</p>}
-          </div>
-        ) : (
-          <div className="annual-summary">
-            <div className="summary-card hero-glow">
-              <h3>{t.annualTurnover}</h3>
-              <p className="big-number">{annualTotal.toLocaleString()} FCFA</p>
-            </div>
-            <div className="summary-card">
-              <h3>{t.totalTaxes}</h3>
-              <p className="big-number tax-color">{annualTaxes.totalTax.toLocaleString()} FCFA</p>
+            <div style={{display: 'flex', gap: '10px'}}>
+              <button type="button" className="test-btn" onClick={handlePrefill} style={{borderColor: 'var(--primary-glow)', color: 'var(--primary-glow)'}}>🎲 {t.prefillData}</button>
+              <button type="button" className="test-btn" onClick={handleClearData} style={{borderColor: '#ff4757', color: '#ff4757'}}>🗑️ {t.clearData}</button>
             </div>
           </div>
         )}
-      </div>
-    </section>
-  ];
+        
+        {renderCalendar()}
+      </section>
 
-  const adminSections = [
-    <section key="admin" className="admin-section glass-panel">
+      <section className="payment-info glass-panel">
+        <h3>{t.paymentInfo}</h3>
+        <p><strong>{t.payTo}</strong> {displaySettings.operator}</p>
+        <p><strong>{t.bankAccount}:</strong> {displaySettings.bankAccount}</p>
+        <p><strong>{t.phoneNumbers}:</strong> {displaySettings.phoneNumbers}</p>
+        <button className="action-btn" onClick={() => setShowPaymentModal(true)} style={{marginTop: '1rem'}}>💳 {t.makePayment}</button>
+      </section>
+
+      <section className="stats-section glass-panel">
+        <div className="stats-nav">
+          <button className={view === 'monthly' ? 'active' : ''} onClick={() => setView('monthly')}>{t.monthly}</button>
+          <button className={view === 'annual' ? 'active' : ''} onClick={() => setView('annual')}>{t.annual}</button>
+        </div>
+        <div className="stats-display">
+          {view === 'monthly' ? (
+            <div className="data-grid">
+              {revenueData.map(data => (
+                <div key={data.id} className="data-card">
+                  <h4>{t.months[data.monthIndex]}</h4>
+                  <p className="revenue">{data.revenue.toLocaleString()} FCFA</p>
+                  <div className="tax-details">
+                    <span>TVA: {data.tva.toLocaleString()}</span>
+                    <span>IS: {data.is.toLocaleString()}</span>
+                    <span>Patente: {data.patente.toLocaleString()}</span>
+                  </div>
+                </div>
+              ))}
+              {revenueData.length === 0 && <p>{t.noData}</p>}
+            </div>
+          ) : (
+            <div className="annual-summary">
+              <div className="summary-card hero-glow">
+                <h3>{t.annualTurnover}</h3>
+                <p className="big-number">{annualTotal.toLocaleString()} FCFA</p>
+              </div>
+              <div className="summary-card">
+                <h3>{t.totalTaxes}</h3>
+                <p className="big-number tax-color">{annualTaxes.totalTax.toLocaleString()} FCFA</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+       <section className="glass-panel">
+        <h3>{t.transactionHistory}</h3>
+        {transactions.length === 0 ? (
+          <p style={{opacity: 0.7}}>{t.noTransactions}</p>
+        ) : (
+          <div className="transaction-list">
+            <div className="transaction-header" style={{display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', marginBottom: '10px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '5px'}}>
+                <span style={{flex: 1.5}}>{t.date}</span>
+                <span style={{flex: 1}}>{t.amount}</span>
+                <span style={{flex: 1}}>{t.method}</span>
+                <span style={{flex: 1, textAlign: 'right'}}>{t.status}</span>
+                <span style={{flex: 1, textAlign: 'right'}}>ID</span>
+            </div>
+            {transactions.map(tx => (
+                <div key={tx.id} className="transaction-item" style={{display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--glass-border)', fontSize: '0.9rem'}}>
+                    <span style={{flex: 1.5}}>{tx.timestamp.toLocaleString()}</span>
+                    <span style={{flex: 1}}>{Number(tx.amount).toLocaleString()} FCFA</span>
+                    <span style={{flex: 1}}>{tx.method === 'mobile_money' ? t.mobileMoney.split('(')[0] : t.bankTransfer}</span>
+                    <span style={{flex: 1, textAlign: 'right', color: tx.status === 'Success' ? '#2ecc71' : '#f1c40f'}}>{tx.status}</span>
+                    <span style={{flex: 1, textAlign: 'right', fontFamily: 'monospace', fontSize: '0.8em'}}>{tx.id}</span>
+                </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="glass-panel">
+        <button className="action-btn" onClick={() => downloadData('pdf')}>{t.downloadPdfOnly}</button>
+      </section>
+    </>
+  );
+
+  const renderAdminDashboard = () => (
+    <>
+        <section key="admin" className="admin-section glass-panel">
       <h3>{t.adminSettings}</h3>
       <div style={{display:'flex', flexDirection:'column', gap:'10px', background:'transparent', border:'none'}}>
         <label>{t.telephony}</label>
@@ -514,7 +565,7 @@ export default function TableauDeBord({ user, initialData, isReadOnly, t, lang, 
               <p><strong>Email:</strong> {selectedUserDetail.registration.email}</p>
               <p><strong>Phone:</strong> {selectedUserDetail.registration.phoneNumber}</p>
               <p><strong>Adresse:</strong> {`${selectedUserDetail.registration.rue}, ${selectedUserDetail.registration.quartier}, ${selectedUserDetail.registration.commune}, ${selectedUserDetail.registration.province}, ${selectedUserDetail.registration.country}`}</p>
-              <p><strong>Status:</strong> <span style={{color: selectedUserDetail.registration.isActive !== false ? '#2ecc71' : '#ff4757'}}>{selectedUserDetail.registration.isActive !== false ? 'Actif' : t.accountDeactivated}</span></p>
+                  <p><strong>Status:</strong> <span style={{color: selectedUserDetail.registration.isActive !== false ? '#2ecc71' : '#ff4757'}}>{selectedUserDetail.registration.isActive !== false ? t.active : t.accountDeactivated}</span></p>
               <p><strong>Payment Status:</strong> {selectedUserDetail.registration.paymentStatus}</p>
               <p><strong>Last Payment:</strong> {selectedUserDetail.registration.lastPaymentDate}</p>
             </div>
@@ -568,206 +619,144 @@ export default function TableauDeBord({ user, initialData, isReadOnly, t, lang, 
           </div>
         </>
       )}
-    </section>,
-    <section key="deploy" className="glass-panel">
-      <h3>🚀 {t.appDeployment}</h3>
-      <div style={{display: 'flex', flexDirection: 'column', gap: '15px'}}>
-        <div style={{padding: '10px', background: 'rgba(0,0,0,0.2)', borderRadius: '5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-          <span>{t.deploymentStatus}:</span>
-          <strong style={{
-            color: deploymentState === 'live' ? '#2ecc71' :
-                   deploymentState === 'building' || deploymentState === 'deploying' ? '#f1c40f' : 'inherit'
-          }}>
-            {deploymentState === 'idle' && t.statusIdle}
-            {deploymentState === 'building' && t.statusBuilding}
-            {deploymentState === 'built' && t.statusBuilt}
-            {deploymentState === 'deploying' && t.statusDeploying}
-            {deploymentState === 'live' && t.statusLive}
-          </strong>
-        </div>
-        <div style={{display: 'flex', gap: '10px'}}>
-          <button className="action-btn" onClick={handleBuildAPK} disabled={deploymentState !== 'idle' && deploymentState !== 'live'}>
-            🛠️ {t.buildApk}
-          </button>
-          <button className="action-btn" onClick={handleDeployPlayStore} disabled={deploymentState !== 'built'} style={{opacity: deploymentState !== 'built' ? 0.5 : 1}}>
-            🚀 {t.deployPlayStore}
-          </button>
-        </div>
-        <p style={{fontSize: '0.8rem', opacity: 0.7, marginTop: '5px'}}>
-          {t.androidStudioSaveTip}
-        </p>
-      </div>
-    </section>,
-    <section key="partner" className="glass-panel">
-      <h3>{t.partner}</h3>
-      <button className="action-btn" onClick={generatePartnerCode}>{t.generatePartnerCode}</button>
-      {generatedPartnerCode && <p style={{marginTop:'10px'}}>Code généré : <strong style={{color:'var(--primary-glow)', fontSize:'1.2em'}}>{generatedPartnerCode}</strong></p>}
-    </section>,
-    <section key="db" className="glass-panel">
-      <h3>{t.adminRestricted}</h3>
-      <p style={{fontSize: '0.9rem', opacity: 0.7, margin: '0 0 1rem 0'}}>
-        {t.manageData}
-      </p>
-      <button
-        className="action-btn"
-        onClick={() => window.open('https://app.supabase.com/', '_blank')}
-        style={{background: 'linear-gradient(45deg, #39b54a, #006837)'}}
-      >
-        {t.openSupabase}
-      </button>
     </section>
-  ];
-  const sections = user.role === 'admin' ? adminSections : userSections;
+        
+        <section className="glass-panel">
+            <h3>🚀 {t.appDeployment}</h3>
+            <div style={{display: 'flex', flexDirection: 'column', gap: '15px'}}>
+                <div style={{padding: '10px', background: 'rgba(0,0,0,0.2)', borderRadius: '5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <span>{t.deploymentStatus}:</span>
+                <strong style={{
+                    color: deploymentState === 'live' ? '#2ecc71' :
+                        deploymentState === 'building' || deploymentState === 'deploying' ? '#f1c40f' : 'inherit'
+                }}>
+                    {deploymentState === 'idle' && t.statusIdle}
+                    {deploymentState === 'building' && t.statusBuilding}
+                    {deploymentState === 'built' && t.statusBuilt}
+                    {deploymentState === 'deploying' && t.statusDeploying}
+                    {deploymentState === 'live' && t.statusLive}
+                </strong>
+                </div>
+                <div style={{display: 'flex', gap: '10px'}}>
+                <button className="action-btn" onClick={handleBuildAPK} disabled={deploymentState !== 'idle' && deploymentState !== 'live'}>
+                    🛠️ {t.buildApk}
+                </button>
+                <button className="action-btn" onClick={handleDeployPlayStore} disabled={deploymentState !== 'built'} style={{opacity: deploymentState !== 'built' ? 0.5 : 1}}>
+                    🚀 {t.deployPlayStore}
+                </button>
+                </div>
+                <p style={{fontSize: '0.8rem', opacity: 0.7, marginTop: '5px'}}>
+                {t.androidStudioSaveTip}
+                </p>
+            </div>
+        </section>
 
-  const nextSection = () => {
-    setCurrentSection((prevSection) => (prevSection + 1) % sections.length);
-  };
+        <section className="glass-panel">
+            <h3>{t.partner}</h3>
+            <button className="action-btn" onClick={generatePartnerCode}>{t.generatePartnerCode}</button>
+            {generatedPartnerCode && <p style={{marginTop:'10px'}}>Code généré : <strong style={{color:'var(--primary-glow)', fontSize:'1.2em'}}>{generatedPartnerCode}</strong></p>}
+        </section>
 
-  const prevSection = () => {
-    setCurrentSection((prevSection) => (prevSection - 1 + sections.length) % sections.length);
-  };
-
-  // DEBUG: Simplified return for testing
-  /*
-  return (
-    <div className="dashboard-container">
-      <h1>Tableau de Bord de Test</h1>
-      <p>Utilisateur: {user.name} ({user.id})</p>
-    </div>
+        <section className="glass-panel">
+            <h3>{t.adminRestricted}</h3>
+            <p style={{fontSize: '0.9rem', opacity: 0.7, margin: '0 0 1rem 0'}}>
+                {t.manageData}
+            </p>
+            <button
+                className="action-btn"
+                onClick={() => window.open('https://app.supabase.com/', '_blank')}
+                style={{background: 'linear-gradient(45deg, #39b54a, #006837)'}}
+            >
+                {t.openSupabase}
+            </button>
+        </section>
+    </>
   );
-  */
 
-  // Original return
   return (
     <div className="dashboard-container">
-      <header className="dashboard-header glass-panel">
-        <div className="company-info">
-          <img src={logo} alt="Company Logo" className="company-logo-small" />
-          <div>
-            <h2>{user.role === 'test' ? t.companyZero : t.myCompany}</h2>
-            <span className="badge">
-              {user.role === 'admin' ? 'ADMIN' :
-               user.role === 'partner' ? 'PARTNER' :
-               user.role === 'test' ? 'TEST' :
-               'BASIC'}
-            </span>
-          </div>
-        </div>
-        <div className="user-profile">
-          ID: {user.id}
-        </div>
-        <button className="help-btn" onClick={onHelp}>
-          {t.help}
-        </button>
-      </header>
-
-      {/* Overdue Payment Notification */}
       {user.role !== 'admin' && currentUserData?.registration?.paymentStatus === 'overdue' && (
-        <div className="glass-panel" style={{borderLeft: '4px solid #ff4757', padding: '1rem', marginTop: '0', backgroundColor: 'rgba(255, 71, 87, 0.1)'}}>
+        <div className="glass-panel" style={{borderLeft: '4px solid #ff4757', padding: '1rem', margin: '1rem 1rem 0 1rem', backgroundColor: 'rgba(255, 71, 87, 0.1)'}}>
           <p style={{margin:0, fontSize:'0.9rem', color: '#ff4757', fontWeight: 'bold'}}>
             {t.overduePaymentWarning || "📢 ATTENTION: Vous avez un paiement en retard. Veuillez contacter le support ou régulariser votre situation."}
           </p>
         </div>
       )}
 
-      {/* Notification Légale & Confidentialité *}
-      {user.role !== 'admin' && (
-        <div className="glass-panel" style={{borderLeft: '4px solid var(--primary-glow)', padding: '1rem', marginTop: '0'}}>
+      <main className="dashboard-content">
+        {user.role === 'admin' ? renderAdminDashboard() : renderUserDashboard()}
+      </main>
 
-        <p style={{margin:0, fontSize:'0.9rem'}}>🔒 <strong>{t.personalDataOnly}</strong> <br/> 📢 {t.paymentReminder} <br/> 🛡️ {t.adminRestricted}</p>
-      </div>
-    )}
-
-    <main className="dashboard-content">
-        <div className="navigation-buttons">
-            <button onClick={prevSection} className="action-btn">{"<"}</button>
-            <button onClick={nextSection} className="action-btn">{">"}</button>
+      {showConfirmModal && selectedUserDetail && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="glass-panel" style={{maxWidth: '400px', textAlign: 'center', border: '1px solid var(--primary-glow)'}}>
+                <h3>Confirmation</h3>
+                <p style={{marginBottom: '20px'}}>
+                    {selectedUserDetail.registration.isActive !== false
+                    ? t.confirmDeactivate
+                    : t.confirmActivate}
+                </p>
+                <div style={{display: 'flex', gap: '15px', justifyContent: 'center'}}>
+                    <button
+                    className="test-btn"
+                    onClick={() => setShowConfirmModal(false)}
+                    style={{width: 'auto', padding: '10px 20px', margin: 0}}
+                    >
+                    {t.cancel}
+                    </button>
+                    <button
+                    className="action-btn"
+                    onClick={confirmUserStatusChange}
+                    style={{
+                        width: 'auto', padding: '10px 20px', margin: 0,
+                        backgroundColor: selectedUserDetail.registration.isActive !== false ? '#ff4757' : '#2ecc71',
+                        backgroundImage: 'none',
+                        color: '#fff'
+                    }}
+                    >
+                    {t.confirm}
+                    </button>
+                </div>
+            </div>
         </div>
-        <div className="sections-container">
-            {sections[currentSection]}
+      )}
+
+      {showPaymentModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+           <div className="glass-panel" style={{maxWidth: '400px', width: '90%', border: '1px solid var(--primary-glow)'}}>
+                <h3>{t.makePayment}</h3>
+
+                <label style={{display:'block', marginBottom:'5px', opacity: 0.7}}>{t.paymentMethod}</label>
+                <select
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    className="input-field"
+                >
+                    <option value="mobile_money">{t.mobileMoney}</option>
+                    <option value="bank_transfer">{t.bankTransfer}</option>
+                </select>
+
+                <label style={{display:'block', marginBottom:'5px', opacity: 0.7}}>{t.amountToPay}</label>
+                <input
+                    type="number"
+                    placeholder="0"
+                    value={paymentAmount}
+                    onChange={(e) => setPaymentAmount(e.target.value)}
+                    className="input-field"
+                />
+
+                <div style={{display: 'flex', gap: '10px', marginTop: '20px'}}>
+                    <button className="test-btn" onClick={() => setShowPaymentModal(false)}>
+                    {t.cancel}
+                    </button>
+                    <button className="action-btn" onClick={handlePayment}>
+                    {t.initiatePayment}
+                    </button>
+                </div>
+            </div>
         </div>
-    </main>
-
-    {/* Confirmation Modal *}
-    {showConfirmModal && selectedUserDetail && (
-      <div style={{
-        position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-        backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1000,
-        display: 'flex', alignItems: 'center', justifyContent: 'center'
-      }}>
-        <div className="glass-panel" style={{maxWidth: '400px', textAlign: 'center', border: '1px solid var(--primary-glow)'}}>
-          <h3>Confirmation</h3>
-          <p style={{marginBottom: '20px'}}>
-            {selectedUserDetail.registration.isActive !== false
-              ? t.confirmDeactivate
-              : t.confirmActivate}
-          </p>
-          <div style={{display: 'flex', gap: '15px', justifyContent: 'center'}}>
-            <button
-              className="test-btn"
-              onClick={() => setShowConfirmModal(false)}
-              style={{width: 'auto', padding: '10px 20px', margin: 0}}
-            >
-              {t.cancel}
-            </button>
-            <button
-              className="action-btn"
-              onClick={confirmUserStatusChange}
-              style={{
-                width: 'auto', padding: '10px 20px', margin: 0,
-                backgroundColor: selectedUserDetail.registration.isActive !== false ? '#ff4757' : '#2ecc71',
-                backgroundImage: 'none',
-                color: '#fff'
-              }}
-            >
-              {t.confirm}
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
-
-    {/* Payment Modal *}
-    {showPaymentModal && (
-      <div style={{
-        position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-        backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1000,
-        display: 'flex', alignItems: 'center', justifyContent: 'center'
-      }}>
-        <div className="glass-panel" style={{maxWidth: '400px', width: '90%', border: '1px solid var(--primary-glow)'}}>
-          <h3>{t.makePayment}</h3>
-
-          <label style={{display:'block', marginBottom:'5px', opacity: 0.7}}>{t.paymentMethod}</label>
-          <select
-            value={paymentMethod}
-            onChange={(e) => setPaymentMethod(e.target.value)}
-            className="input-field"
-          >
-            <option value="mobile_money">{t.mobileMoney}</option>
-            <option value="bank_transfer">{t.bankTransfer}</option>
-          </select>
-
-          <label style={{display:'block', marginBottom:'5px', opacity: 0.7}}>{t.amountToPay}</label>
-          <input
-            type="number"
-            placeholder="0"
-            value={paymentAmount}
-            onChange={(e) => setPaymentAmount(e.target.value)}
-            className="input-field"
-          />
-
-          <div style={{display: 'flex', gap: '10px', marginTop: '20px'}}>
-            <button className="test-btn" onClick={() => setShowPaymentModal(false)}>
-              {t.cancel}
-            </button>
-            <button className="action-btn" onClick={handlePayment}>
-              {t.initiatePayment}
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
-  </div>
+      )}
+    </div>
   );
 
 }

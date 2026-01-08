@@ -1,0 +1,25 @@
+/* Thème Professionnel Gabon (Vert-Jaune-Bleu) */
+/* Vert: Forêt (Espérance), Jaune: Soleil (Équateur), Bleu: Mer */
+
+[data-theme="white"] {
+  /* Mapping des variables système pour le thème Gabon */
+  --bg-dark: #e0e0e0; /* Fond de base gris cendré */
+  --glass-bg: rgba(240, 253, 244, 0.95); /* Fond panneau très clair, quasi opaque */
+  --glass-border: #007a4b; /* Bordure vert foncé solide */
+  --primary-glow: #007a4b; /* Vert Forêt Foncé (Texte blanc lisible dessus) */
+  --secondary-glow: #0056b3; /* Bleu Foncé (Texte blanc lisible dessus) */
+  --text-main: #000000; /* Noir pur pour le texte principal */
+  --text-muted: #333333; /* Gris très foncé */
+  --map-bg-start: #e8e8e8; /* Gris cendré clair au centre */
+  --map-bg-end: #888888; /* Gris cendré foncé vers les bords */
+  --pattern-color: rgba(0, 0, 0, 0.25); /* Motif noir plus visible pour fond clair */
+  
+  /* Force la couleur du texte pour éviter l'héritage blanc */
+  color: var(--text-main);
+}
+
+/* Force la couleur des titres et éléments importants pour le thème Gabon */
+[data-theme="white"] h1, [data-theme="white"] h2, [data-theme="white"] h3, [data-theme="white"] h4,
+[data-theme="white"] strong {
+  color: var(--text-main);
+}

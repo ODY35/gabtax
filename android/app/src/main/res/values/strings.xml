@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Gtax</string>
+    <string name="title_activity_main">Gtax</string>
+    <string name="package_name">com.gabtax.app</string>
+    <string name="custom_url_scheme">com.gabtax.app</string>
+</resources>
