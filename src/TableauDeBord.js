@@ -4,7 +4,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 
-export default function TableauDeBord({ user, initialData, isReadOnly, t, lang, logo, adminSettings, setAdminSettings, allUsersData, setAllUsersData, onHelp, isLoading, onShowDeclarationPage, onShowPaiementPage, onShowAnalyseFiscalePage }) {
+export default function TableauDeBord({ user, initialData, isReadOnly, t, lang, logo, adminSettings, setAdminSettings, allUsersData, setAllUsersData, onHelp, isLoading, onShowDeclarationPage, onShowPaiementPage, onShowAnalyseFiscalePage, installPrompt }) {
   const [revenueData, setRevenueData] = useState(initialData || []);
   const [currentMonthRevenue, setCurrentMonthRevenue] = useState('');
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(0);
@@ -27,6 +27,18 @@ export default function TableauDeBord({ user, initialData, isReadOnly, t, lang, 
   const [currentUserData, setCurrentUserData] = useState(null);
   const [deploymentState, setDeploymentState] = useState('idle'); // idle, building, built, deploying, live
   const [notifications, setNotifications] = useState([]);
+
+  useEffect(() => {
+    const firstVisit = localStorage.getItem('firstVisit');
+    if (!firstVisit) {
+      const newNotif = { id: Date.now(), type: 'info', message: t.downloadApp || 'Téléchargez notre application pour une meilleure expérience !' };
+      setNotifications(prev => [newNotif, ...prev]);
+      localStorage.setItem('firstVisit', 'true');
+      setTimeout(() => {
+        setNotifications(prev => prev.filter(n => n.id !== newNotif.id));
+      }, 5000);
+    }
+  }, [t.downloadApp]);
 
   // Paramètres fictifs pour le mode test (générés une seule fois)
   const [testSettings] = useState({
@@ -56,31 +68,6 @@ export default function TableauDeBord({ user, initialData, isReadOnly, t, lang, 
     newNotifications.push({ id: 3, type: 'info', message: t.alertSystemUpdate || "System update completed" });
     setNotifications(newNotifications);
   }, [currentUserData, t]);
-
-  // Simulation des notifications légales (Email & SMS)
-  useEffect(() => {
-    if (user.role !== 'admin' && currentUserData) {
-      // Sécurité : En production, les logs ne doivent pas exposer de données utilisateur.
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[SECURE LOG] Notification simulée pour ${user.id}`);
-      }
-
-      // Notification Vocale IA (Support Multilingue)
-      try {
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
-          const message = currentUserData.registration.paymentStatus === 'overdue' 
-            ? (t.overduePaymentNotification || "Attention, vous avez un retard de paiement. Veuillez régulariser votre situation.")
-            : t.payTaxNotification;
-          const utterance = new SpeechSynthesisUtterance(message);
-          utterance.lang = lang === 'fr' ? 'fr-FR' : 'en-US';
-          window.speechSynthesis.speak(utterance);
-        }
-      } catch (error) {
-        console.error("Speech synthesis failed. This can happen on some mobile devices.", error);
-      }
-    }
-  }, [user, t, lang, currentUserData]);
 
   useEffect(() => {
     // Placeholder for sound effect

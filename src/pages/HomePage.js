@@ -6,7 +6,7 @@ import AnalyseFiscalePage from './AnalyseFiscalePage';
 import HelpPage from './HelpPage';
 import './HomePage.css';
 
-const HomePage = ({ user, t, lang, onLogout, onToggleLang, onToggleTheme, theme, logo, adminSettings, setAdminSettings, allUsersData, setAllUsersData, isLoading }) => {
+const HomePage = ({ user, t, lang, onLogout, onToggleLang, onToggleTheme, theme, logo, adminSettings, setAdminSettings, allUsersData, setAllUsersData, isLoading, installPrompt }) => {
   const [activeView, setActiveView] = useState('home'); // 'home', 'dashboard', 'declaration', 'paiement', 'analyse', 'help'
 
   const renderContent = () => {
@@ -27,6 +27,7 @@ const HomePage = ({ user, t, lang, onLogout, onToggleLang, onToggleTheme, theme,
         onShowDeclarationPage: () => setActiveView('declaration'),
         onShowPaiementPage: () => setActiveView('paiement'),
         onShowAnalyseFiscalePage: () => setActiveView('analyse'),
+        installPrompt,
     };
     switch (activeView) {
       case 'dashboard':
@@ -73,6 +74,19 @@ const HomePage = ({ user, t, lang, onLogout, onToggleLang, onToggleTheme, theme,
     </div>
   );
 
+  const handleInstallClick = () => {
+    if (installPrompt) {
+      installPrompt.prompt();
+      installPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+        } else {
+          console.log('User dismissed the install prompt');
+        }
+      });
+    }
+  };
+
   return (
     <div className="mobile-home-page">
       <header className="home-header">
@@ -85,6 +99,11 @@ const HomePage = ({ user, t, lang, onLogout, onToggleLang, onToggleTheme, theme,
         </div>
         <div className="header-title">GABTAX</div>
         <div className="header-right">
+            {installPrompt && (
+              <button className="header-btn" onClick={handleInstallClick}>
+                📥
+              </button>
+            )}
             <button className="header-btn" onClick={onToggleLang}>{lang === 'fr' ? 'EN' : 'FR'}</button>
             <button className="header-btn" onClick={onToggleTheme}>🎨</button>
             <button className="header-btn" onClick={onLogout}>🚪</button>

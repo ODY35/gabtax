@@ -19,7 +19,21 @@ function App() {
   const [showRegistration, setShowRegistration] = useState(false);
   const [allUsersData, setAllUsersData] = useState(generateAllUsersData());
   const [isLoading, setIsLoading] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState(null);
   const t = translations[lang];
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
 
   const [adminSettings, setAdminSettings] = useState({
     bankAccount: 'BG 1234 5678 9000',
@@ -55,7 +69,7 @@ function App() {
     if (user && user.role === 'test') {
       setUser(prev => ({ ...prev, name: t.businessTest }));
     }
-  }, [lang, t.businessTest]);
+  }, [lang, t.businessTest, user]);
 
   const handleLogout = () => {
     setUser(null);
@@ -107,6 +121,7 @@ function App() {
             allUsersData={allUsersData}
             setAllUsersData={setAllUsersData}
             isLoading={isLoading}
+            installPrompt={installPrompt}
           />
           <AIButton logo={logo} t={t} user={user} data={[]} lang={lang} adminSettings={adminSettings} />
         </>
